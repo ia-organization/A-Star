@@ -1,101 +1,169 @@
-class Node():
-    def __init__(self,value,point):
-        self.value = value
-        self.point = point
-        self.parent = None
-        self.H = 0
-        self.G = 0
 
-    def move_cost(self,other):
-        return 0 if self.value == '.' else 1
+# Credit for this: Nicholas Swift
+# as found at https://medium.com/@nicholas.w.swift/easy-a-star-pathfinding-7e6689c7f7b2
+from warnings import warn
 
-        
-def children(point,grid):
-    x,y = point.point
-    print(len(grid))
-    print(len(grid[0]))
-    print ([(0 if (x-1) < 0 else x-1, y),(x,0 if (y - 1)< 0 else y-1),(x,y + 1),(x+1,y)])
-    links = [grid[d[0]][d[1]] for d in [(0 if (x-1) < 0 else x-1, y),(x,0 if (y - 1)< 0 else y-1),(x,y + 1),(x+1,y)]]
-    return [link for link in links if link.value != '%']
+class Node:
+    """
+    A node class for A* Pathfinding
+    """
 
+    def __init__(self, parent=None, position=None):
+        self.parent = parent
+        self.position = position
+
+        self.g = 0
+        self.h = 0
+        self.f = 0
+
+    def __eq__(self, other):
+        return self.position == other.position
+
+
+def return_path(current_node):
+    path = []
+    current = current_node
+    while current is not None:
+        path.append(current.position)
+        current = current.parent
+    return path[::-1]  # Return reversed path
+
+# Function for Manhattan heuristic
 def manhattan(point,point2):
-    return abs(point.point[0] - point2.point[0]) + abs(point.point[1]-point2.point[0])
+    return abs(point.position[0] - point2.position[0]) + abs(point.position[1]-point2.position[0])
 
-def aStar(start, goal, grid):
-    openset = []
-    closedset = []
+def astar(maze, start, end, allow_diagonal_movement = False):
+    """
+    Returns a list of tuples as a path from the given start to the given end in the given maze
+    :param maze:
+    :param start:
+    :param end:
+    :return:
+    """
 
-    #Ponto de partida   é o ponto inicial
-    current = start
+    # Create start and end node
+    start_node = Node(None, start)
+    start_node.g = start_node.h = start_node.f = 0
+    end_node = Node(None, end)
+    end_node.g = end_node.h = end_node.f = 0
 
-    #Adicionando o ponto inicial a lista aberta
-    openset.append(current)
+    # Initialize both open and closed list
+    open_list = []
+    closed_list = []
 
-    #Enquanto houver elementos na lista aberta
-    while openset:
-        #Find the item in the open set with the lowest G + H score
-        current = min(openset, key=lambda o:o.G + o.H)
-        #If it is the item we want, retrace the path and return it
-        if current == goal:
-            path = []
-            while current.parent:
-                path.append(current)
-                current = current.parent
-            path.append(current)
-            return path[::-1]
-        #Remove the item from the open set
-        openset.remove(current)
-        #Add it to the closed set
-        closedset.append(current)
-        #Loop through the node's children/siblings
-        for node in children(current,grid):
-            #If it is already in the closed set, skip it
-            if node in closedset:
+    # Add the start node
+    open_list.append(start_node)
+    
+    # Adding a stop condition
+    outer_iterations = 0
+    max_iterations = (len(maze) // 2) ** 2
+
+    # what squares do we search
+    adjacent_squares = ((0, -1), (0, 1), (-1, 0), (1, 0),)
+    if allow_diagonal_movement:
+        adjacent_squares = ((0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1),)
+
+    # Loop until you find the end
+    while len(open_list) > 0:
+        outer_iterations += 1
+        
+        # Get the current node
+        current_node = open_list[0]
+        current_index = 0
+        for index, item in enumerate(open_list):
+            if item.f < current_node.f:
+                current_node = item
+                current_index = index
+                
+        # if outer_iterations > max_iterations:
+        #     # if we hit this point return the path such as it is
+        #     # it will not contain the destination
+        #     warn("giving up on pathfinding too many iterations")
+        #     return return_path(current_node)
+
+        # Pop current off open list, add to closed list
+        open_list.pop(current_index)
+        closed_list.append(current_node)
+
+        # Found the goal
+        if current_node == end_node:
+            return return_path(current_node)
+
+        # Generate children
+        children = []
+        
+        for new_position in adjacent_squares: # Adjacent squares
+
+            # Get node position
+            node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
+
+            # Make sure within range
+            if node_position[0] > (len(maze) - 1) or node_position[0] < 0 or node_position[1] > (len(maze[len(maze)-1]) -1) or node_position[1] < 0:
                 continue
-            #Otherwise if it is already in the open set
-            if node in openset:
-                #Check if we beat the G score 
-                new_g = current.G + current.move_cost(node)
-                if node.G > new_g:
-                    #If so, update the node to have a new parent
-                    node.G = new_g
-                    node.parent = current
-            else:
-                #If it isn't in the open set, calculate the G and H score for the node
-                node.G = current.G + current.move_cost(node)
-                node.H = manhattan(node, goal)
-                #Set the parent to our current item
-                node.parent = current
-                #Add it to the set
-                openset.append(node)
-    #Throw an exception if there is no path
-    raise ValueError('No Path Found')
-def next_move(pacman,food,grid):
-    #Convert all the points to instances of Node
-    for x in range(len(grid)):
-        for y in range(len(grid[x])):
-            grid[x][y] = Node(grid[x][y],(x,y))
-    #Get the path
-    print(len(grid))
-    print(len(grid[0]))
-    print(pacman)
-    print(food)
-    path = aStar(grid[pacman[0]][pacman[1]],grid[food[0]][food[1]],grid)
-    #Output the path
-    print (len(path) - 1)
-    for node in path:
-        x, y = node.point
-        print (x, y)
-pacman_x = int(input())
-pacman_y = int(input())
-food_x = int(input())
-food_y = int(input())
-x = int(input())
-y = int(input())
 
- 
-grid = []
-for i in range(0, x):
-    grid.append(input().split())
- 
-next_move((pacman_x, pacman_y),(food_x, food_y), grid)
+            # Make sure walkable terrain
+            if maze[node_position[0]][node_position[1]] != 0:
+                continue
+
+            # Create new node
+            new_node = Node(current_node, node_position)
+
+            # Append
+            children.append(new_node)
+
+        # Loop through children
+        for child in children:
+            
+            # Child is on the closed list
+            if len([closed_child for closed_child in closed_list if closed_child == child]) > 0:
+                continue
+
+            # Create the f, g, and h values
+            child.g = current_node.g + 1
+            
+            #Changed the Euclidean heuristics to the Manhattan Heuristics
+            # child.h = ((child.position[0] - end_node.position[0]) ** 2) + ((child.position[1] - end_node.position[1]) ** 2)
+            child.h = manhattan(child,end_node)
+            child.f = child.g + child.h
+
+            # Child is already in the open list
+            if len([open_node for open_node in open_list if child == open_node and child.g > open_node.g]) > 0:
+                continue
+
+            # Add the child to the open list
+            open_list.append(child)
+
+
+def main():
+
+    # maze = [[0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    #         [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    #         [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    #         [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    #         [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    #         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #         [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    #         [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    #         [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    #         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+
+    # start = (0, 0)
+    # end = (7, 6)
+
+    maze = [[0,0,0,0,0,0,0,0],
+            [0,0,0,0,1,0,0,0],
+            [0,0,0,0,1,0,0,0],
+            [0,0,0,0,1,0,0,0],
+            [0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0]]
+
+    start = (2, 2)
+    end = (2, 6)
+
+
+
+    path = astar(maze, start, end)
+    print(path)
+
+if __name__ == '__main__':
+    main()
