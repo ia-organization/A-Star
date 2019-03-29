@@ -15,7 +15,8 @@ def read_map(path_file):
         exit(0)
 
 
-def create_map(config):
+def create_map(path):
+    config = read_map(path)
     size_map = config[0]
     lst_wall = config[1]
     col = int(size_map[1])
@@ -28,12 +29,3 @@ def create_map(config):
         map[lin][col] = 1
 
     return map
-
-
-def print_map(map):
-    for i in range(len(map)):
-        print(map[i])
-
-
-if __name__ == "__main__":
-    print_map(create_map(read_map('teste.txt')))

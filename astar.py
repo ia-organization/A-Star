@@ -2,6 +2,7 @@
 # Credit for this: Nicholas Swift
 # as found at https://medium.com/@nicholas.w.swift/easy-a-star-pathfinding-7e6689c7f7b2
 from warnings import warn
+from map import *
 
 class Node:
     """
@@ -150,17 +151,30 @@ def main():
     # start = (0, 0)
     # end = (7, 6)
 
-    maze = [[0,0,0,0,0,0,0,0],
-            [0,0,0,0,1,0,0,0],
-            [0,0,0,0,1,0,0,0],
-            [0,0,0,0,1,0,0,0],
-            [0,0,0,0,0,0,0,0],
-            [0,0,0,0,0,0,0,0]]
+    # maze = [[0,0,0,0,0,0,0,0],
+    #         [0,0,0,0,1,0,0,0],
+    #         [0,0,0,0,1,0,0,0],
+    #         [0,0,0,0,1,0,0,0],
+    #         [0,0,0,0,0,0,0,0],
+    #         [0,0,0,0,0,0,0,0]]
 
-    start = (2, 2)
-    end = (2, 6)
+    # start = (2, 2)
+    # end = (2, 6)
 
+    # maze = [[0,1,0,0,0,0],
+    #         [0,1,0,0,0,0],
+    #         [0,1,0,0,0,0],
+    #         [0,1,0,0,0,0],
+    #         [0,0,0,0,0,0],
+    #         [0,0,0,0,1,0]]
 
+    # start = (0, 0)
+    # end = (4, 5)    
+
+    start = input("Insira o ponto inicial (x, y): ")
+    end = input("Insira o ponto de chegada (x, y): ")
+    path = input("Insira o nome do arquivo com o grid: ")
+    maze = create_map(path)
 
     path = astar(maze, start, end)
     print(path)
